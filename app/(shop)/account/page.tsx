@@ -2,12 +2,9 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getUserOrders, getProfile, getWishlist } from "@/lib/queries";
-import { formatPrice, formatDate } from "@/lib/utils";
-import { Badge } from "@/components/ui/Badge";
-import { Button } from "@/components/ui/Button";
-import { ORDER_STATUS_LABELS } from "@/lib/constants";
+import { OrderCard } from "@/components/account/OrderCard";
 import { Order } from "@/lib/types";
-import { Package, Heart, User } from "lucide-react";
+import { Package, Heart, User, ShoppingBag } from "lucide-react";
 
 export default async function AccountOverviewPage() {
   const supabase = await createClient();
@@ -23,75 +20,64 @@ export default async function AccountOverviewPage() {
   ]);
 
   const recentOrders = (orders as Order[]).slice(0, 3);
+  const name = profile?.full_name || profile?.username || "there";
 
   return (
     <div className="space-y-6">
-      <div className="rounded-xl border bg-white p-6 shadow-sm">
-        <p className="text-lg font-semibold text-gray-900">
-          Hello, {profile?.full_name || profile?.username || "there"}!
+      <div className="overflow-hidden rounded-2xl bg-gradient-to-br from-brand-900 via-brand-800 to-brand-700 p-6 text-white shadow-lg">
+        <p className="text-sm text-white/80">Welcome back</p>
+        <p className="mt-1 text-2xl font-bold">Hello, {name}!</p>
+        <p className="mt-2 text-sm text-white/75">
+          Manage orders, wishlist, and profile from your account dashboard.
         </p>
-        <p className="mt-1 text-sm text-gray-500">
-          Welcome back to SR Boutique. Use the menu to manage your account.
-        </p>
+        <Link
+          href="/shop"
+          className="mt-4 inline-flex items-center gap-2 rounded-lg bg-white/15 px-4 py-2 text-sm font-medium backdrop-blur transition hover:bg-white/25"
+        >
+          <ShoppingBag className="h-4 w-4" />
+          Continue Shopping
+        </Link>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-3">
-        <Link
-          href="/account/orders"
-          className="rounded-xl border bg-white p-4 shadow-sm transition hover:border-brand-200"
-        >
-          <Package className="h-5 w-5 text-brand-800" />
-          <p className="mt-2 font-semibold">{orders.length}</p>
-          <p className="text-sm text-gray-500">Total Orders</p>
-        </Link>
-        <Link
-          href="/wishlist"
-          className="rounded-xl border bg-white p-4 shadow-sm transition hover:border-brand-200"
-        >
-          <Heart className="h-5 w-5 text-brand-800" />
-          <p className="mt-2 font-semibold">{wishlist.length}</p>
-          <p className="text-sm text-gray-500">Wishlist Items</p>
-        </Link>
-        <Link
-          href="/account/profile"
-          className="rounded-xl border bg-white p-4 shadow-sm transition hover:border-brand-200"
-        >
-          <User className="h-5 w-5 text-brand-800" />
-          <p className="mt-2 font-semibold">Profile</p>
-          <p className="text-sm text-gray-500">Edit your details</p>
-        </Link>
+        {[
+          { href: "/account/orders", icon: Package, value: orders.length, label: "Total Orders" },
+          { href: "/wishlist", icon: Heart, value: wishlist.length, label: "Wishlist Items" },
+          { href: "/account/profile", icon: User, value: null, label: "Edit Profile" },
+        ].map(({ href, icon: Icon, value, label }) => (
+          <Link
+            key={href}
+            href={href}
+            className="card group transition hover:border-brand-200 hover:shadow-md"
+          >
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-50 text-brand-800 transition group-hover:bg-brand-100">
+              <Icon className="h-5 w-5" />
+            </div>
+            {value !== null && (
+              <p className="mt-3 text-2xl font-bold text-gray-900">{value}</p>
+            )}
+            <p className={`${value !== null ? "mt-0.5" : "mt-3"} text-sm text-gray-500`}>{label}</p>
+          </Link>
+        ))}
       </div>
 
-      <div className="rounded-xl border bg-white p-6 shadow-sm">
-        <div className="flex items-center justify-between">
-          <h2 className="font-semibold text-gray-900">Recent Orders</h2>
-          <Link href="/account/orders" className="text-sm text-brand-800 hover:underline">
-            View all
-          </Link>
+      <div className="card">
+        <div className="flex items-center justify-between border-b border-gray-100 pb-4">
+          <h2 className="font-bold text-gray-900">Recent Orders</h2>
+          {orders.length > 0 && (
+            <Link href="/account/orders" className="text-sm font-medium text-brand-800 hover:underline">
+              View all
+            </Link>
+          )}
         </div>
         {recentOrders.length > 0 ? (
           <div className="mt-4 space-y-3">
             {recentOrders.map((order) => (
-              <div
-                key={order.id}
-                className="flex flex-wrap items-center justify-between gap-2 rounded-lg border p-3"
-              >
-                <div>
-                  <p className="font-medium">#{order.id.slice(0, 8).toUpperCase()}</p>
-                  <p className="text-xs text-gray-500">{formatDate(order.created_at)}</p>
-                </div>
-                <Badge>{ORDER_STATUS_LABELS[order.status] || order.status}</Badge>
-                <span className="font-semibold">{formatPrice(order.total)}</span>
-                <Link href={`/account/orders/${order.id}`}>
-                  <Button variant="outline" size="sm">
-                    Details
-                  </Button>
-                </Link>
-              </div>
+              <OrderCard key={order.id} order={order} compact />
             ))}
           </div>
         ) : (
-          <p className="mt-4 text-sm text-gray-500">No orders yet.</p>
+          <p className="mt-6 text-center text-sm text-gray-500">No orders yet.</p>
         )}
       </div>
     </div>

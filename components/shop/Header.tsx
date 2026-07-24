@@ -96,7 +96,7 @@ export function Header() {
 
   return (
     <>
-      <header className="sticky top-0 z-50 border-b border-gray-200 bg-white/95 backdrop-blur-sm">
+      <header className="sticky top-0 z-50 border-b border-gray-100 bg-white/95 shadow-sm backdrop-blur-md">
         <div className="mx-auto max-w-7xl px-3 sm:px-4">
           <div className="flex h-14 items-center justify-between gap-2 sm:h-16 sm:gap-4">
             <button

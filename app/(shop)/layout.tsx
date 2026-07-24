@@ -10,7 +10,7 @@ export default function ShopLayout({
 }) {
   return (
     <CartProvider>
-      <div className="flex min-h-screen flex-col">
+      <div className="flex min-h-screen flex-col bg-[var(--background)]">
         <Header />
         <main className="flex-1">{children}</main>
         <Footer />

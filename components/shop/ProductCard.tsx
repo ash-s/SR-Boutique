@@ -57,7 +57,7 @@ export function ProductCard({ product, showWishlist = true }: ProductCardProps) 
 
   return (
     <Link href={`/product/${product.id}`} className="group block">
-      <div className="relative aspect-[3/4] overflow-hidden rounded-lg bg-gray-100">
+      <div className="relative aspect-[3/4] overflow-hidden rounded-2xl bg-gray-100">
         {imageUrl ? (
           <ProductImage
             src={imageUrl}

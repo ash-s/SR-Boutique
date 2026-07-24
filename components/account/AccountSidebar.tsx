@@ -35,15 +35,15 @@ export function AccountSidebar() {
     exact ? pathname === href : (pathname?.startsWith(href) ?? false);
 
   return (
-    <aside className="rounded-xl border bg-white p-4 shadow-sm">
-      <nav className="space-y-1">
+    <aside className="card p-3 sm:p-4">
+      <nav className="flex gap-1 overflow-x-auto lg:flex-col lg:overflow-visible">
         {links.map(({ href, label, icon: Icon, exact }) => (
           <Link
             key={href}
             href={href}
-            className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
+            className={`flex flex-shrink-0 items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all lg:flex-shrink ${
               isActive(href, exact)
-                ? "bg-brand-50 text-brand-900"
+                ? "bg-brand-900 text-white shadow-sm"
                 : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
             }`}
           >
@@ -54,7 +54,7 @@ export function AccountSidebar() {
         <button
           type="button"
           onClick={handleLogout}
-          className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50"
+          className="flex flex-shrink-0 items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-red-600 transition hover:bg-red-50 lg:w-full"
         >
           <LogOut className="h-4 w-4" />
           Logout

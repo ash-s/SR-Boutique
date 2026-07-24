@@ -28,18 +28,18 @@ export default function CartPage() {
   }
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8">
-      <h1 className="text-2xl font-bold text-gray-900">Shopping Cart</h1>
-      <p className="text-sm text-gray-500">{items.length} item(s)</p>
+    <div className="mx-auto max-w-7xl px-3 py-6 sm:px-4 sm:py-8">
+      <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">Shopping Cart</h1>
+      <p className="mt-1 text-sm text-gray-500">{items.length} item(s) in your bag</p>
 
-      <div className="mt-8 grid gap-8 lg:grid-cols-3">
-        <div className="lg:col-span-2 space-y-4">
+      <div className="mt-6 grid gap-6 lg:grid-cols-3 lg:gap-8">
+        <div className="space-y-3 lg:col-span-2">
           {items.map((item) => {
             const price = getEffectivePrice(item.price, item.sale_price);
             return (
               <div
                 key={`${item.product_id}-${item.size}-${item.color}`}
-                className="flex gap-4 rounded-lg border p-4"
+                className="card flex gap-4 !p-4"
               >
                 <div className="relative h-24 w-20 flex-shrink-0 overflow-hidden rounded-md bg-gray-100">
                   {item.image_url ? (
@@ -87,7 +87,7 @@ export default function CartPage() {
           })}
         </div>
 
-        <div className="h-fit rounded-lg border p-6">
+        <div className="card h-fit lg:sticky lg:top-24">
           <h2 className="text-lg font-semibold">Order Summary</h2>
           <div className="mt-4 space-y-2 text-sm">
             <div className="flex justify-between">
