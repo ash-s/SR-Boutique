@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { Product } from "@/lib/types";
 import {
@@ -9,6 +8,7 @@ import {
   getEffectivePrice,
   getDiscountPercent,
   getProductImage,
+  normalizeImageUrl,
   formatDate,
 } from "@/lib/utils";
 import { useCart } from "@/components/CartProvider";
@@ -16,8 +16,9 @@ import { useWishlist } from "@/components/WishlistProvider";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { ProductCard } from "@/components/shop/ProductCard";
+import { ProductImage } from "@/components/shop/ProductImage";
 import { RecentlyViewed, trackRecentlyViewed } from "@/components/shop/RecentlyViewed";
-import { Star, Heart } from "lucide-react";
+import { Star, Heart, ShoppingBag } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useState } from "react";
 
@@ -42,6 +43,7 @@ export function ProductDetailClient({
   const [size, setSize] = useState(product.sizes?.[0] || "Free Size");
   const [color, setColor] = useState(product.colors?.[0] || "Default");
   const [added, setAdded] = useState(false);
+  const [wishlistAdded, setWishlistAdded] = useState(false);
   const [reviews] = useState(initialReviews);
   const [reviewForm, setReviewForm] = useState({ rating: 5, comment: "" });
   const [reviewLoading, setReviewLoading] = useState(false);
@@ -53,8 +55,18 @@ export function ProductDetailClient({
 
   const effectivePrice = getEffectivePrice(product.price, product.sale_price);
   const discount = getDiscountPercent(product.price, product.sale_price);
-  const mainImage = images[selectedImage]?.image_url || getProductImage(product);
+  const mainImage = normalizeImageUrl(
+    images[selectedImage]?.image_url || getProductImage(product)
+  );
   const inWishlist = wishlistLoaded && isInWishlist(product.id);
+
+  const handleWishlist = async () => {
+    await toggle(product.id);
+    if (!inWishlist) {
+      setWishlistAdded(true);
+      setTimeout(() => setWishlistAdded(false), 2000);
+    }
+  };
 
   const handleAddToCart = () => {
     addItem({
@@ -113,13 +125,37 @@ export function ProductDetailClient({
         <div>
           <div className="relative aspect-[3/4] overflow-hidden rounded-lg bg-gray-100">
             {mainImage ? (
-              <Image src={mainImage} alt={product.name} fill className="object-cover" priority />
+              <ProductImage src={mainImage} alt={product.name} fill className="object-cover" />
             ) : (
               <div className="flex h-full items-center justify-center text-gray-400">No Image</div>
             )}
             {discount > 0 && (
-              <Badge variant="sale" className="absolute left-4 top-4">{discount}% OFF</Badge>
+              <Badge variant="sale" className="absolute left-3 top-3 z-10">{discount}% OFF</Badge>
             )}
+            <button
+              type="button"
+              onClick={handleWishlist}
+              className={`absolute right-3 top-3 z-20 flex items-center gap-1.5 rounded-full px-3 py-2 shadow-md transition ${
+                inWishlist
+                  ? "bg-red-500 text-white"
+                  : "bg-white/95 text-gray-800 hover:bg-white hover:text-red-500"
+              }`}
+              aria-label={inWishlist ? "Remove from wishlist" : "Add to wishlist"}
+            >
+              <Heart className={`h-5 w-5 ${inWishlist ? "fill-current" : ""}`} />
+              <span className="text-sm font-medium">{inWishlist ? "Saved" : "Wishlist"}</span>
+            </button>
+            <div className="absolute inset-x-0 bottom-0 z-10 bg-black/60 p-3">
+              <Button
+                size="lg"
+                className="w-full gap-2"
+                onClick={handleAddToCart}
+                disabled={product.stock <= 0}
+              >
+                <ShoppingBag className="h-4 w-4" />
+                {added ? "Added to Cart!" : "Add to Cart"}
+              </Button>
+            </div>
           </div>
           {images.length > 1 && (
             <div className="mt-4 flex gap-2 overflow-x-auto">
@@ -131,7 +167,7 @@ export function ProductDetailClient({
                     i === selectedImage ? "border-brand-800" : "border-transparent"
                   }`}
                 >
-                  <Image src={img.image_url} alt="" fill className="object-cover" />
+                  <ProductImage src={img.image_url} alt="" fill className="object-cover" />
                 </button>
               ))}
             </div>
@@ -139,19 +175,12 @@ export function ProductDetailClient({
         </div>
 
         <div>
-          <div className="flex items-start justify-between gap-4">
-            <h1 className="text-2xl font-bold text-gray-900">{product.name}</h1>
-            <button
-              type="button"
-              onClick={() => toggle(product.id)}
-              className={`rounded-full p-2 transition ${
-                inWishlist ? "bg-red-50 text-red-500" : "bg-gray-100 text-gray-500 hover:text-red-500"
-              }`}
-              aria-label={inWishlist ? "Remove from wishlist" : "Add to wishlist"}
-            >
-              <Heart className={`h-5 w-5 ${inWishlist ? "fill-current" : ""}`} />
-            </button>
-          </div>
+          <h1 className="text-2xl font-bold text-gray-900">{product.name}</h1>
+          {inWishlist && (
+            <p className="mt-1 text-sm font-medium text-red-500">
+              {wishlistAdded ? "Added to wishlist!" : "Saved in your wishlist"}
+            </p>
+          )}
           {(product.brand || product.material) && (
             <p className="mt-1 text-sm text-gray-500">
               {[product.brand, product.material].filter(Boolean).join(" · ")}
@@ -210,27 +239,35 @@ export function ProductDetailClient({
             {product.stock > 0 ? `${product.stock} in stock` : "Out of stock"}
           </p>
 
-          <div className="mt-6 flex gap-3 pb-20 sm:pb-0">
+          <div className="mt-6 flex flex-col gap-3 pb-20 sm:pb-0">
             <Button
               size="lg"
-              className="flex-1"
+              className="w-full"
               onClick={handleAddToCart}
               disabled={product.stock <= 0}
             >
               {added ? "Added!" : "Add to Cart"}
             </Button>
             <Link href="/cart" className="hidden sm:block">
-              <Button size="lg" variant="outline">View Cart</Button>
+              <Button size="lg" variant="outline" className="w-full">View Cart</Button>
             </Link>
           </div>
 
           {/* Mobile sticky add-to-cart bar */}
           <div className="fixed inset-x-0 bottom-0 z-40 border-t bg-white p-3 shadow-lg sm:hidden">
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-semibold">{formatPrice(effectivePrice)}</p>
                 <p className="truncate text-xs text-gray-500">{size} · {color}</p>
               </div>
+              <button
+                type="button"
+                onClick={handleWishlist}
+                className={`rounded-lg border p-2.5 ${inWishlist ? "border-red-200 bg-red-50 text-red-500" : "border-gray-300"}`}
+                aria-label="Add to wishlist"
+              >
+                <Heart className={`h-4 w-4 ${inWishlist ? "fill-current" : ""}`} />
+              </button>
               <Button
                 className="flex-shrink-0"
                 onClick={handleAddToCart}

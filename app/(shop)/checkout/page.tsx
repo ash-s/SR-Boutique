@@ -74,6 +74,24 @@ export default function CheckoutPage() {
       const { error: itemsError } = await supabase.from("order_items").insert(orderItems);
       if (itemsError) throw itemsError;
 
+      // Notify admin on WhatsApp (server-side via CallMeBot, or fallback link)
+      try {
+        const notifyRes = await fetch("/api/orders/notify", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ orderId: order.id }),
+        });
+        const notifyData = await notifyRes.json();
+        if (notifyData.whatsappUrl) {
+          sessionStorage.setItem(`order-wa-${order.id}`, notifyData.whatsappUrl);
+        }
+        if (notifyData.sent) {
+          sessionStorage.setItem(`order-wa-sent-${order.id}`, "1");
+        }
+      } catch {
+        // Order saved — notify failure is non-blocking
+      }
+
       clearCart();
       router.push(`/order-success/${order.id}`);
     } catch (err: unknown) {

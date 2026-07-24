@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { MAIN_CATEGORIES, CATEGORY_IMAGES } from "@/lib/constants";
 import { Category } from "@/lib/types";
+import { ProductImage } from "@/components/shop/ProductImage";
 
 interface CategoryTilesProps {
   categories: Category[];
@@ -23,13 +23,11 @@ export function CategoryTiles({ categories }: CategoryTilesProps) {
           href={`/shop/${cat.slug}`}
           className="group relative aspect-[4/5] overflow-hidden rounded-xl bg-gradient-to-br from-brand-200 to-brand-400 shadow-sm transition-shadow hover:shadow-lg"
         >
-          <Image
+          <ProductImage
             src={cat.image_url}
             alt={cat.name}
             fill
-            unoptimized
             className="object-cover transition-transform duration-300 group-hover:scale-105"
-            sizes="(max-width: 768px) 50vw, 25vw"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
           <div className="absolute inset-x-0 bottom-0 p-4">

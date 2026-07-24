@@ -53,7 +53,7 @@ export function FilterSidebar({
     : (mainCategory ? (SUBCATEGORIES[mainCategory] || []).map((s) => ({ id: s.slug, name: s.name, slug: s.slug })) : []);
 
   return (
-    <div className={mobile ? "p-4" : "sticky top-24 space-y-6"}>
+    <div className={mobile ? "p-4" : "space-y-6"}>
       <div className="flex items-center justify-between">
         <h3 className="flex items-center gap-2 font-semibold text-gray-900">
           <SlidersHorizontal className="h-4 w-4" /> Filters

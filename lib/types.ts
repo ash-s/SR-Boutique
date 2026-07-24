@@ -64,6 +64,8 @@ export interface Order {
   total: number;
   address: OrderAddress;
   payment_method: string;
+  tracking_number?: string | null;
+  estimated_delivery?: string | null;
   created_at: string;
   order_items?: OrderItem[];
   profiles?: Profile | null;

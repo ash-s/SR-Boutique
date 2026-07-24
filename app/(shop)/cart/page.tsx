@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { useCart } from "@/components/CartProvider";
 import { Button } from "@/components/ui/Button";
+import { ProductImage } from "@/components/shop/ProductImage";
 import { formatPrice, getEffectivePrice } from "@/lib/utils";
 import { Minus, Plus, Trash2, ShoppingBag } from "lucide-react";
 
@@ -43,7 +43,7 @@ export default function CartPage() {
               >
                 <div className="relative h-24 w-20 flex-shrink-0 overflow-hidden rounded-md bg-gray-100">
                   {item.image_url ? (
-                    <Image src={item.image_url} alt={item.name} fill className="object-cover" />
+                    <ProductImage src={item.image_url} alt={item.name} fill className="object-cover" />
                   ) : (
                     <div className="flex h-full items-center justify-center text-xs text-gray-400">No img</div>
                   )}

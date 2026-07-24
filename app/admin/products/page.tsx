@@ -1,9 +1,9 @@
 import Link from "next/link";
-import Image from "next/image";
 import { getAllProductsAdmin } from "@/lib/queries";
 import { formatPrice, getEffectivePrice, getProductImage } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
+import { ProductImage } from "@/components/shop/ProductImage";
 import { Plus, Pencil } from "lucide-react";
 
 export default async function AdminProductsPage() {
@@ -45,7 +45,7 @@ export default async function AdminProductsPage() {
                       <div className="flex items-center gap-3">
                         <div className="relative h-12 w-10 overflow-hidden rounded bg-gray-100">
                           {imageUrl ? (
-                            <Image src={imageUrl} alt="" fill className="object-cover" />
+                            <ProductImage src={imageUrl} alt="" fill className="object-cover" />
                           ) : (
                             <div className="flex h-full items-center justify-center text-xs text-gray-400">—</div>
                           )}

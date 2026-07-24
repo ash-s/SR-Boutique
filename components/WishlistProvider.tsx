@@ -44,7 +44,13 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     refresh();
-  }, [refresh]);
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
+      refresh();
+    });
+
+    return () => subscription.unsubscribe();
+  }, [refresh, supabase]);
 
   const isInWishlist = useCallback((productId: string) => ids.has(productId), [ids]);
 

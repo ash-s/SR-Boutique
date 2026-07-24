@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { SavedAddress, OrderAddress } from "@/lib/types";
+import { maskPhone } from "@/lib/utils";
 import { Trash2, Star } from "lucide-react";
 
 const emptyAddress: OrderAddress = {
@@ -109,7 +110,7 @@ export function AddressesClient() {
                     <p className="text-sm text-gray-600">
                       {addr.address_line1}, {addr.city} - {addr.pincode}
                     </p>
-                    <p className="text-sm text-gray-500">{addr.phone}</p>
+                    <p className="text-sm text-gray-500">{maskPhone(addr.phone)}</p>
                   </div>
                   <div className="flex gap-2">
                     {!addr.is_default && (

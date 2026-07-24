@@ -1,11 +1,11 @@
 import Link from "next/link";
-import Image from "next/image";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getUserOrders } from "@/lib/queries";
 import { formatPrice, formatDate } from "@/lib/utils";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
+import { ProductImage } from "@/components/shop/ProductImage";
 import { ORDER_STATUS_LABELS } from "@/lib/constants";
 import { Order, OrderItem } from "@/lib/types";
 
@@ -43,7 +43,7 @@ export default async function AccountOrdersPage() {
                     <div key={item.id} className="flex items-center gap-2 text-sm">
                       {item.image_url && (
                         <div className="relative h-12 w-12 overflow-hidden rounded-md bg-gray-100">
-                          <Image
+                          <ProductImage
                             src={item.image_url}
                             alt={item.product_name}
                             fill

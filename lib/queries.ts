@@ -198,10 +198,27 @@ export async function getAdminStats() {
 }
 
 export async function getAllOrders() {
+  const { createAdminClient } = await import("@/lib/supabase/admin");
+  const admin = createAdminClient();
+
+  if (admin) {
+    const { data, error } = await admin
+      .from("orders")
+      .select("*, order_items(*)")
+      .order("created_at", { ascending: false });
+
+    if (!error && data) return data;
+  }
+
   const supabase = await createClient();
+  const { data: rpcData, error: rpcError } = await supabase.rpc("admin_get_all_orders");
+  if (!rpcError && rpcData) {
+    return Array.isArray(rpcData) ? rpcData : [];
+  }
+
   const { data, error } = await supabase
     .from("orders")
-    .select("*, order_items(*), profiles(full_name, phone)")
+    .select("*, order_items(*)")
     .order("created_at", { ascending: false });
 
   if (error) {

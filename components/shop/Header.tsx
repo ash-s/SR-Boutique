@@ -10,6 +10,7 @@ import {
   Menu,
   LogOut,
   Heart,
+  X,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useCart } from "@/components/CartProvider";
@@ -67,6 +68,17 @@ export function Header() {
     return () => subscription.unsubscribe();
   }, [supabase]);
 
+  useEffect(() => {
+    if (searchOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [searchOpen]);
+
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
@@ -107,7 +119,7 @@ export function Header() {
             <div className="flex items-center gap-0.5 sm:gap-2">
               <button
                 type="button"
-                onClick={() => setSearchOpen(!searchOpen)}
+                onClick={() => setSearchOpen(true)}
                 className="rounded-full p-2 hover:bg-gray-100"
                 aria-label="Search"
               >
@@ -191,9 +203,30 @@ export function Header() {
               )}
             </div>
           </div>
+        </div>
+      </header>
 
-          {searchOpen && (
-            <form onSubmit={handleSearch} className="border-t py-3">
+      {searchOpen && (
+        <div className="fixed inset-0 z-[70]">
+          <button
+            type="button"
+            className="absolute inset-0 bg-black/50"
+            onClick={() => setSearchOpen(false)}
+            aria-label="Close search"
+          />
+          <div className="absolute left-1/2 top-[15%] w-[min(480px,calc(100vw-2rem))] -translate-x-1/2 rounded-xl bg-white p-4 shadow-2xl">
+            <div className="mb-3 flex items-center justify-between">
+              <h2 className="text-sm font-semibold text-gray-900">Search Products</h2>
+              <button
+                type="button"
+                onClick={() => setSearchOpen(false)}
+                className="rounded-full p-1.5 hover:bg-gray-100"
+                aria-label="Close"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <form onSubmit={handleSearch}>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
                 <input
@@ -201,14 +234,20 @@ export function Header() {
                   placeholder="Search for products..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full rounded-md border border-gray-300 py-2 pl-10 pr-4 text-sm focus:border-brand-600 focus:outline-none focus:ring-1 focus:ring-brand-600"
+                  className="w-full rounded-md border border-gray-300 py-2.5 pl-10 pr-4 text-sm focus:border-brand-600 focus:outline-none focus:ring-1 focus:ring-brand-600"
                   autoFocus
                 />
               </div>
+              <button
+                type="submit"
+                className="mt-3 w-full rounded-md bg-brand-900 py-2.5 text-sm font-medium text-white hover:bg-brand-800"
+              >
+                Search
+              </button>
             </form>
-          )}
+          </div>
         </div>
-      </header>
+      )}
 
       <MobileNavDrawer open={mobileOpen} onClose={() => setMobileOpen(false)} user={user} />
     </>

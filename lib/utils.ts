@@ -45,5 +45,45 @@ export function getProductImage(product: {
   const sorted = [...product.product_images].sort(
     (a, b) => a.sort_order - b.sort_order
   );
-  return sorted[0].image_url;
+  return normalizeImageUrl(sorted[0].image_url);
+}
+
+/** Fix common image URL issues from Supabase storage or uploads */
+export function normalizeImageUrl(url: string | null | undefined): string | null {
+  if (!url || typeof url !== "string") return null;
+  const trimmed = url.trim();
+  if (!trimmed) return null;
+
+  if (trimmed.startsWith("//")) return `https:${trimmed}`;
+  if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) return trimmed;
+
+  const supabaseBase = process.env.NEXT_PUBLIC_SUPABASE_URL?.replace(/\/$/, "");
+  if (supabaseBase && trimmed.startsWith("/storage/")) {
+    return `${supabaseBase}${trimmed}`;
+  }
+  if (supabaseBase && !trimmed.includes("://")) {
+    return `${supabaseBase}/storage/v1/object/public/product-images/${trimmed.replace(/^\//, "")}`;
+  }
+
+  return trimmed;
+}
+
+/** Mask phone for display — e.g. +91 98XX XXX 41 */
+export function maskPhone(phone: string | null | undefined): string {
+  if (!phone) return "—";
+  const digits = phone.replace(/\D/g, "");
+  const local = digits.slice(-10);
+  if (local.length < 4) return "+91 XXXXX XXXXX";
+  return `+91 ${local.slice(0, 2)}XX XXX ${local.slice(-2)}`;
+}
+
+/** Mask internal phone-auth email for display */
+export function maskAuthEmail(email: string | null | undefined): string {
+  if (!email) return "Phone account";
+  if (!email.endsWith("@phone.srboutique.app")) return email;
+  const digits = email.split("@")[0];
+  if (digits.length >= 4) {
+    return `Phone account (••••${digits.slice(-4)})`;
+  }
+  return "Phone account";
 }

@@ -8,6 +8,7 @@ import { PasswordInput } from "@/components/ui/PasswordInput";
 import { Button } from "@/components/ui/Button";
 import { validateUsername } from "@/lib/auth-utils";
 import { ensureProfile, formatSupabaseError } from "@/lib/profile-utils";
+import { maskAuthEmail, maskPhone } from "@/lib/utils";
 import { Profile } from "@/lib/types";
 import { useEffect } from "react";
 
@@ -142,27 +143,33 @@ export function ProfileEditor({ profile, email, authEmail, accountType }: Profil
           onChange={(e) => setForm({ ...form, full_name: e.target.value })}
           className="h-11"
         />
-        <Input
-          label="Phone Number"
-          type="tel"
-          value={form.phone}
-          onChange={(e) => setForm({ ...form, phone: e.target.value })}
-          placeholder="9500943141"
-          className="h-11"
-        />
+        <div>
+          <label className="mb-1.5 block text-sm font-medium text-gray-700">Phone Number</label>
+          <p className="rounded-lg bg-gray-50 px-3 py-2.5 text-sm text-gray-600">
+            {form.phone ? maskPhone(`+91${form.phone.replace(/\D/g, "").slice(-10)}`) : "Not set"}
+          </p>
+          <Input
+            label="Update Phone"
+            type="tel"
+            value={form.phone}
+            onChange={(e) => setForm({ ...form, phone: e.target.value })}
+            placeholder="Enter new number to update"
+            className="mt-2 h-11"
+          />
+        </div>
 
         <div>
           <label className="mb-1.5 block text-sm font-medium text-gray-700">
-            {isPhoneAccount ? "Login Email (internal)" : "Login Email"}
+            {isPhoneAccount ? "Login Account" : "Login Email"}
           </label>
           <p className="rounded-lg bg-gray-50 px-3 py-2.5 text-sm text-gray-600">
             {isPhoneAccount
-              ? authEmail || "Phone account"
+              ? maskAuthEmail(authEmail)
               : email || "Not set"}
           </p>
           {isPhoneAccount && (
             <p className="mt-1 text-xs text-gray-500">
-              Phone accounts use an internal email for login. Your phone number is used to sign in.
+              Your phone number is used to sign in. It is hidden for privacy.
             </p>
           )}
         </div>

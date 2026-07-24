@@ -1,18 +1,17 @@
 import Link from "next/link";
-import Image from "next/image";
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getOrderById } from "@/lib/queries";
-import { formatPrice, formatDate } from "@/lib/utils";
+import { formatPrice, formatDate, maskPhone } from "@/lib/utils";
 import { Badge } from "@/components/ui/Badge";
+import { ProductImage } from "@/components/shop/ProductImage";
+import { OrderTrackingTimeline } from "@/components/shop/OrderTrackingTimeline";
 import { ORDER_STATUS_LABELS } from "@/lib/constants";
-import { OrderItem } from "@/lib/types";
+import { OrderItem, OrderStatus } from "@/lib/types";
 
 interface OrderDetailPageProps {
   params: Promise<{ id: string }>;
 }
-
-const statusSteps = ["pending", "confirmed", "shipped", "delivered"] as const;
 
 export default async function OrderDetailPage({ params }: OrderDetailPageProps) {
   const { id } = await params;
@@ -35,7 +34,6 @@ export default async function OrderDetailPage({ params }: OrderDetailPageProps) 
   }
 
   const items = (order.order_items || []) as OrderItem[];
-  const currentStep = statusSteps.indexOf(order.status as (typeof statusSteps)[number]);
 
   return (
     <div className="rounded-xl border bg-white p-6 shadow-sm">
@@ -50,22 +48,14 @@ export default async function OrderDetailPage({ params }: OrderDetailPageProps) 
         <span className="text-sm text-gray-500">{formatDate(order.created_at)}</span>
       </div>
 
-      {order.status !== "cancelled" && (
-        <div className="mt-6 flex flex-wrap gap-2">
-          {statusSteps.map((step, i) => (
-            <div
-              key={step}
-              className={`rounded-full px-3 py-1 text-xs font-medium ${
-                i <= currentStep
-                  ? "bg-brand-900 text-white"
-                  : "bg-gray-100 text-gray-500"
-              }`}
-            >
-              {ORDER_STATUS_LABELS[step]}
-            </div>
-          ))}
-        </div>
-      )}
+      <div className="mt-6">
+        <OrderTrackingTimeline
+          status={order.status as OrderStatus}
+          createdAt={order.created_at}
+          trackingNumber={order.tracking_number}
+          estimatedDelivery={order.estimated_delivery}
+        />
+      </div>
 
       <div className="mt-6">
         <h3 className="font-semibold">Items</h3>
@@ -75,7 +65,7 @@ export default async function OrderDetailPage({ params }: OrderDetailPageProps) 
               <div className="flex items-center gap-3">
                 {item.image_url ? (
                   <div className="relative h-16 w-16 overflow-hidden rounded-md bg-gray-100">
-                    <Image src={item.image_url} alt={item.product_name} fill className="object-cover" />
+                    <ProductImage src={item.image_url} alt={item.product_name} fill className="object-cover" />
                   </div>
                 ) : (
                   <div className="flex h-16 w-16 items-center justify-center rounded-md bg-gray-100 text-xs text-gray-400">
@@ -93,7 +83,7 @@ export default async function OrderDetailPage({ params }: OrderDetailPageProps) 
             </div>
           ))}
         </div>
-        <div className="mt-4 border-t pt-4 flex justify-between font-semibold">
+        <div className="mt-4 flex justify-between border-t pt-4 font-semibold">
           <span>Total</span>
           <span>{formatPrice(order.total)}</span>
         </div>
@@ -108,7 +98,7 @@ export default async function OrderDetailPage({ params }: OrderDetailPageProps) 
           <p>
             {order.address.city}, {order.address.state} - {order.address.pincode}
           </p>
-          <p>Phone: {order.address.phone}</p>
+          <p>Contact: {maskPhone(order.address.phone)}</p>
         </div>
         <p className="mt-3 text-sm">Payment: Cash on Delivery</p>
       </div>

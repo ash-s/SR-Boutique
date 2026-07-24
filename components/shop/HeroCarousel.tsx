@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { ChevronLeft, ChevronRight, Pause, Play } from "lucide-react";
+import { normalizeImageUrl } from "@/lib/utils";
 
 const SLIDES = [
   {
@@ -33,21 +33,21 @@ const AUTO_MS = 6000;
 
 function SlideImage({ src, alt, priority }: { src: string; alt: string; priority?: boolean }) {
   const [failed, setFailed] = useState(false);
+  const url = normalizeImageUrl(src);
 
-  if (failed) {
+  if (!url || failed) {
     return <div className="absolute inset-0 bg-gradient-to-br from-brand-300 to-brand-600" aria-hidden />;
   }
 
   return (
-    <Image
-      src={src}
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={url}
       alt={alt}
-      fill
-      priority={priority}
-      unoptimized
+      loading={priority ? "eager" : "lazy"}
+      decoding="async"
       onError={() => setFailed(true)}
-      className="object-cover"
-      sizes="100vw"
+      className="absolute inset-0 h-full w-full object-cover"
       draggable={false}
     />
   );

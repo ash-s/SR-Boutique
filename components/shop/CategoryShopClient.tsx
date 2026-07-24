@@ -36,8 +36,8 @@ export function CategoryShopClient({
         <p className="text-sm text-gray-500">{products.length} products</p>
       </div>
 
-      <div className="flex gap-8">
-        <aside className="hidden w-64 flex-shrink-0 lg:block">
+      <div className="flex items-start gap-8">
+        <aside className="sticky top-20 hidden max-h-[calc(100vh-5rem)] w-64 flex-shrink-0 self-start overflow-y-auto lg:block">
           <FilterSidebar
             categories={categories}
             mainCategory={mainCategory}
