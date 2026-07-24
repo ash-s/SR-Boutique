@@ -58,10 +58,10 @@ Fill in:
 ```
 NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
-NEXT_PUBLIC_WHATSAPP_NUMBER=919500943141
+NEXT_PUBLIC_WHATSAPP_NUMBER=91 xxxxxxxxxx
 ```
 
-Default WhatsApp: **+91 9500943141** (SR Boutique business number).
+Default WhatsApp: **+91 xxxxxxxxxx** (SR Boutique business number).
 
 ### 4. Run locally
 
