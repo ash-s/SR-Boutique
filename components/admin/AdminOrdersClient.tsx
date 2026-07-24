@@ -2,27 +2,32 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { formatPrice, formatDate } from "@/lib/utils";
-import { Badge } from "@/components/ui/Badge";
 import { Select } from "@/components/ui/Select";
 import { Input } from "@/components/ui/Input";
 import { ProductImage } from "@/components/shop/ProductImage";
-import { ORDER_STATUSES, ORDER_STATUS_LABELS } from "@/lib/constants";
-import { OrderStatus } from "@/lib/types";
+import { ORDER_STATUSES, ORDER_STATUS_LABELS, ORDER_ITEM_STATUSES, ORDER_ITEM_STATUS_LABELS, PAYMENT_STATUS_LABELS, ORDER_STATUS_SHORT_LABELS } from "@/lib/constants";
+import { OrderStatus, OrderItemStatus } from "@/lib/types";
 import { createClient } from "@/lib/supabase/client";
+import { OrderStatusBadge } from "@/components/shared/OrderStatusBadge";
+import { cn } from "@/lib/utils";
 
 interface AdminOrder {
   id: string;
   status: string;
   total: number;
   created_at: string;
+  payment_method?: string;
+  payment_status?: string;
   tracking_number?: string | null;
   estimated_delivery?: string | null;
   address: { full_name: string; phone: string; city: string };
   order_items?: Array<{
+    id?: string;
     product_name: string;
     quantity: number;
     price: number;
     image_url?: string | null;
+    item_status?: string;
   }>;
 }
 
@@ -69,6 +74,14 @@ export function AdminOrdersClient({ orders: initialOrders }: AdminOrdersClientPr
 
   const filtered = filter ? orders.filter((o) => o.status === filter) : orders;
 
+  const statusCounts = ORDER_STATUSES.reduce(
+    (acc, status) => {
+      acc[status] = orders.filter((o) => o.status === status).length;
+      return acc;
+    },
+    {} as Record<string, number>
+  );
+
   const getTrackingEdit = (order: AdminOrder) =>
     trackingEdits[order.id] ?? {
       tracking_number: order.tracking_number || "",
@@ -78,6 +91,42 @@ export function AdminOrdersClient({ orders: initialOrders }: AdminOrdersClientPr
   const updateStatus = async (orderId: string, status: OrderStatus) => {
     setError("");
     const tracking = trackingEdits[orderId];
+
+    if (status === "cancelled") {
+      const { error: cancelError } = await supabase.rpc("cancel_order_with_stock", {
+        p_order_id: orderId,
+      });
+
+      if (cancelError) {
+        const { error: updateError } = await supabase
+          .from("orders")
+          .update({ status: "cancelled", payment_status: "refunded" })
+          .eq("id", orderId);
+
+        if (updateError) {
+          setError(cancelError.message || updateError.message);
+          return;
+        }
+      }
+
+      setOrders((prev) =>
+        prev.map((o) =>
+          o.id === orderId
+            ? {
+                ...o,
+                status,
+                payment_status: "refunded",
+                order_items: o.order_items?.map((item) => ({
+                  ...item,
+                  item_status: item.item_status === "active" ? "cancelled" : item.item_status,
+                })),
+              }
+            : o
+        )
+      );
+      return;
+    }
+
     const payload: Record<string, string | null> = { status };
     if (tracking?.tracking_number) payload.tracking_number = tracking.tracking_number;
     if (tracking?.estimated_delivery) payload.estimated_delivery = tracking.estimated_delivery;
@@ -91,14 +140,57 @@ export function AdminOrdersClient({ orders: initialOrders }: AdminOrdersClientPr
       setError(updateError.message);
       return;
     }
+
+    if (status === "delivered") {
+      await supabase.rpc("record_order_payment", {
+        p_order_id: orderId,
+        p_payment_status: "paid",
+        p_notes: "COD collected on delivery",
+      });
+    }
+
     setOrders((prev) =>
       prev.map((o) =>
         o.id === orderId
           ? {
               ...o,
               status,
+              payment_status: status === "delivered" ? "paid" : o.payment_status,
               tracking_number: tracking?.tracking_number || o.tracking_number,
               estimated_delivery: tracking?.estimated_delivery || o.estimated_delivery,
+            }
+          : o
+      )
+    );
+  };
+
+  const updateItemStatus = async (itemId: string, orderId: string, itemStatus: OrderItemStatus) => {
+    setError("");
+    const { error: rpcError } = await supabase.rpc("update_order_item_status", {
+      p_item_id: itemId,
+      p_new_status: itemStatus,
+    });
+
+    if (rpcError) {
+      const { error: updateError } = await supabase
+        .from("order_items")
+        .update({ item_status: itemStatus })
+        .eq("id", itemId);
+
+      if (updateError) {
+        setError(rpcError.message || updateError.message);
+        return;
+      }
+    }
+
+    setOrders((prev) =>
+      prev.map((o) =>
+        o.id === orderId
+          ? {
+              ...o,
+              order_items: o.order_items?.map((item) =>
+                item.id === itemId ? { ...item, item_status: itemStatus } : item
+              ),
             }
           : o
       )
@@ -150,19 +242,36 @@ export function AdminOrdersClient({ orders: initialOrders }: AdminOrdersClientPr
           >
             Refresh
           </button>
-          <Select
-            options={[
-              { value: "", label: "All Statuses" },
-              ...ORDER_STATUSES.map((s) => ({
-                value: s,
-                label: ORDER_STATUS_LABELS[s] || s,
-              })),
-            ]}
-            value={filter}
-            onChange={(e) => setFilter(e.target.value)}
-            className="w-36 text-xs [&_select]:h-8 [&_select]:py-1"
-          />
         </div>
+      </div>
+
+      <div className="mt-5 flex flex-wrap gap-2">
+        <button
+          type="button"
+          onClick={() => setFilter("")}
+          className={cn(
+            "rounded-full px-4 py-1.5 text-sm font-medium transition-colors",
+            !filter ? "bg-brand-900 text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+          )}
+        >
+          All ({orders.length})
+        </button>
+        {ORDER_STATUSES.map((status) => (
+          <button
+            key={status}
+            type="button"
+            onClick={() => setFilter(status)}
+            className={cn(
+              "rounded-full px-4 py-1.5 text-sm font-medium transition-colors",
+              filter === status
+                ? "bg-brand-900 text-white"
+                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+            )}
+          >
+            {ORDER_STATUS_SHORT_LABELS[status] || ORDER_STATUS_LABELS[status]} (
+            {statusCounts[status] || 0})
+          </button>
+        ))}
       </div>
 
       {error && (
@@ -193,9 +302,13 @@ export function AdminOrdersClient({ orders: initialOrders }: AdminOrdersClientPr
                   </div>
                   <div className="text-right">
                     <p className="text-lg font-bold">{formatPrice(order.total)}</p>
-                    <Badge className="mt-1">
-                      {ORDER_STATUS_LABELS[order.status] || order.status}
-                    </Badge>
+                    <div className="mt-1 flex justify-end">
+                      <OrderStatusBadge status={order.status} />
+                    </div>
+                    <p className="mt-1 text-xs text-gray-500">
+                      {(order.payment_method || "cod").toUpperCase()} ·{" "}
+                      {PAYMENT_STATUS_LABELS[order.payment_status || "pending"] || "Pending"}
+                    </p>
                   </div>
                 </div>
 
@@ -203,7 +316,7 @@ export function AdminOrdersClient({ orders: initialOrders }: AdminOrdersClientPr
                   <p className="text-sm font-medium">Items:</p>
                   <div className="mt-2 space-y-2">
                     {order.order_items?.map((item, i) => (
-                      <div key={i} className="flex items-center gap-3 text-sm">
+                      <div key={item.id || i} className="flex flex-wrap items-center gap-3 text-sm">
                         {item.image_url && (
                           <div className="relative h-10 w-10 overflow-hidden rounded bg-gray-100">
                             <ProductImage
@@ -214,10 +327,27 @@ export function AdminOrdersClient({ orders: initialOrders }: AdminOrdersClientPr
                             />
                           </div>
                         )}
-                        <span className="text-gray-600">
+                        <span className="flex-1 text-gray-600">
                           {item.product_name} x{item.quantity} —{" "}
                           {formatPrice(item.price * item.quantity)}
                         </span>
+                        {item.id && (
+                          <Select
+                            options={ORDER_ITEM_STATUSES.map((s) => ({
+                              value: s,
+                              label: ORDER_ITEM_STATUS_LABELS[s] || s,
+                            }))}
+                            value={item.item_status || "active"}
+                            onChange={(e) =>
+                              updateItemStatus(
+                                item.id!,
+                                order.id,
+                                e.target.value as OrderItemStatus
+                              )
+                            }
+                            className="w-32 text-xs [&_select]:h-8 [&_select]:py-1 [&_select]:text-xs"
+                          />
+                        )}
                       </div>
                     ))}
                   </div>
@@ -248,7 +378,7 @@ export function AdminOrdersClient({ orders: initialOrders }: AdminOrdersClientPr
                   />
                 </div>
 
-                <div className="mt-3 flex flex-wrap items-center gap-2">
+                <div className="mt-3 flex flex-wrap items-center gap-2 border-t pt-3">
                   <button
                     type="button"
                     onClick={() => saveTracking(order.id)}
@@ -256,7 +386,7 @@ export function AdminOrdersClient({ orders: initialOrders }: AdminOrdersClientPr
                   >
                     Save Tracking
                   </button>
-                  <span className="text-sm">Update delivery status:</span>
+                  <span className="text-sm font-medium text-gray-700">Order status:</span>
                   <Select
                     options={ORDER_STATUSES.map((s) => ({
                       value: s,
@@ -264,7 +394,7 @@ export function AdminOrdersClient({ orders: initialOrders }: AdminOrdersClientPr
                     }))}
                     value={order.status}
                     onChange={(e) => updateStatus(order.id, e.target.value as OrderStatus)}
-                    className="w-28 max-w-[7rem] text-xs [&_select]:h-8 [&_select]:py-1 [&_select]:text-xs"
+                    className="min-w-[11rem] text-xs [&_select]:h-9 [&_select]:py-1 [&_select]:text-xs"
                   />
                 </div>
               </div>
@@ -272,7 +402,11 @@ export function AdminOrdersClient({ orders: initialOrders }: AdminOrdersClientPr
           })
         ) : (
           <div className="rounded-lg border bg-white py-12 text-center text-gray-500">
-            <p>No orders found.</p>
+            <p>
+              {filter
+                ? `No orders with status "${ORDER_STATUS_LABELS[filter] || filter}"`
+                : "No orders found."}
+            </p>
             <p className="mt-2 text-sm">
               Add <code className="rounded bg-gray-100 px-1">SUPABASE_SERVICE_ROLE_KEY</code> to
               .env.local and set your account role to admin in Supabase.

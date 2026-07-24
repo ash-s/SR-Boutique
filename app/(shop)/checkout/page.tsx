@@ -6,14 +6,12 @@ import Link from "next/link";
 import { useCart } from "@/components/CartProvider";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
-import { createClient } from "@/lib/supabase/client";
 import { formatPrice, getEffectivePrice } from "@/lib/utils";
 import { OrderAddress } from "@/lib/types";
 
 export default function CheckoutPage() {
   const { items, total, clearCart, isLoaded } = useCart();
   const router = useRouter();
-  const supabase = createClient();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -44,35 +42,23 @@ export default function CheckoutPage() {
     setError("");
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-
-      const { data: order, error: orderError } = await supabase
-        .from("orders")
-        .insert({
-          user_id: user?.id || null,
-          status: "pending",
+      const placeRes = await fetch("/api/orders/place", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
           total,
           address,
           payment_method: "cod",
-        })
-        .select()
-        .single();
+          items,
+        }),
+      });
 
-      if (orderError) throw orderError;
+      const placeData = await placeRes.json();
+      if (!placeRes.ok) {
+        throw new Error(placeData.error || "Failed to place order");
+      }
 
-      const orderItems = items.map((item) => ({
-        order_id: order.id,
-        product_id: item.product_id,
-        product_name: item.name,
-        size: item.size,
-        color: item.color,
-        quantity: item.quantity,
-        price: getEffectivePrice(item.price, item.sale_price),
-        image_url: item.image_url || null,
-      }));
-
-      const { error: itemsError } = await supabase.from("order_items").insert(orderItems);
-      if (itemsError) throw itemsError;
+      const order = { id: placeData.orderId as string };
 
       // Notify admin on WhatsApp (server-side via CallMeBot, or fallback link)
       try {

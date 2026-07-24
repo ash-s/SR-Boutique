@@ -7,6 +7,15 @@ export type OrderStatus =
   | "delivered"
   | "cancelled";
 
+export type PaymentStatus =
+  | "pending"
+  | "paid"
+  | "refunded"
+  | "partial_refund"
+  | "failed";
+
+export type OrderItemStatus = "active" | "returned" | "replaced" | "cancelled";
+
 export interface Profile {
   id: string;
   full_name: string | null;
@@ -64,6 +73,7 @@ export interface Order {
   total: number;
   address: OrderAddress;
   payment_method: string;
+  payment_status?: PaymentStatus;
   tracking_number?: string | null;
   estimated_delivery?: string | null;
   created_at: string;
@@ -81,6 +91,28 @@ export interface OrderItem {
   quantity: number;
   price: number;
   image_url?: string | null;
+  item_status?: OrderItemStatus;
+}
+
+export interface PaymentHistoryEntry {
+  id: string;
+  order_id: string;
+  amount: number;
+  payment_method: string;
+  payment_status: PaymentStatus;
+  notes: string | null;
+  created_at: string;
+  orders?: Order | null;
+}
+
+export interface InventoryMovement {
+  id: string;
+  product_id: string;
+  order_id: string | null;
+  order_item_id: string | null;
+  change_qty: number;
+  reason: string;
+  created_at: string;
 }
 
 export interface OrderAddress {

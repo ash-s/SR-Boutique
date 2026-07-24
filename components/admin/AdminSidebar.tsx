@@ -14,6 +14,8 @@ import {
   Menu,
   X,
   Plus,
+  Warehouse,
+  CreditCard,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { BRAND_NAME } from "@/lib/constants";
@@ -22,8 +24,10 @@ import { Button } from "@/components/ui/Button";
 const ADMIN_LINKS = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
   { href: "/admin/products", label: "Products", icon: Package },
+  { href: "/admin/inventory", label: "Inventory", icon: Warehouse },
   { href: "/admin/categories", label: "Categories", icon: FolderOpen },
   { href: "/admin/orders", label: "Orders", icon: ShoppingCart },
+  { href: "/admin/payments", label: "Payments", icon: CreditCard },
   { href: "/admin/customers", label: "Customers", icon: Users },
   { href: "/admin/reviews", label: "Reviews", icon: Star },
 ];

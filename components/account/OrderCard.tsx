@@ -1,16 +1,9 @@
 import Link from "next/link";
 import { ChevronRight, Package } from "lucide-react";
 import { formatPrice, formatDate } from "@/lib/utils";
-import { Badge } from "@/components/ui/Badge";
 import { ProductImage } from "@/components/shop/ProductImage";
-import { ORDER_STATUS_LABELS } from "@/lib/constants";
+import { OrderStatusBadge } from "@/components/shared/OrderStatusBadge";
 import { Order, OrderItem } from "@/lib/types";
-
-function statusVariant(status: string): "success" | "warning" | "default" {
-  if (status === "delivered") return "success";
-  if (status === "pending") return "warning";
-  return "default";
-}
 
 interface OrderCardProps {
   order: Order;
@@ -40,9 +33,7 @@ export function OrderCard({ order, compact = false }: OrderCardProps) {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <Badge variant={statusVariant(order.status)}>
-            {ORDER_STATUS_LABELS[order.status] || order.status}
-          </Badge>
+          <OrderStatusBadge status={order.status} />
           <ChevronRight className="h-5 w-5 text-gray-300 transition group-hover:translate-x-0.5 group-hover:text-brand-700" />
         </div>
       </div>

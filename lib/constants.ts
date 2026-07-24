@@ -33,6 +33,47 @@ export const ORDER_STATUS_LABELS: Record<string, string> = {
   cancelled: "Cancelled",
 };
 
+/** Short labels for compact UI chips */
+export const ORDER_STATUS_SHORT_LABELS: Record<string, string> = {
+  pending: "Placed",
+  confirmed: "Confirmed",
+  shipped: "Out for Delivery",
+  delivered: "Delivered",
+  cancelled: "Cancelled",
+};
+
+export const PAYMENT_STATUSES = [
+  "pending",
+  "paid",
+  "refunded",
+  "partial_refund",
+  "failed",
+] as const;
+
+export const PAYMENT_STATUS_LABELS: Record<string, string> = {
+  pending: "Pending",
+  paid: "Paid",
+  refunded: "Refunded",
+  partial_refund: "Partial Refund",
+  failed: "Failed",
+};
+
+export const ORDER_ITEM_STATUSES = [
+  "active",
+  "returned",
+  "replaced",
+  "cancelled",
+] as const;
+
+export const ORDER_ITEM_STATUS_LABELS: Record<string, string> = {
+  active: "Active",
+  returned: "Returned",
+  replaced: "Replaced",
+  cancelled: "Cancelled",
+};
+
+export const LOW_STOCK_THRESHOLD = 5;
+
 export const MAIN_CATEGORIES = [
   { name: "Men", slug: "men" },
   { name: "Women", slug: "women" },

@@ -2,9 +2,9 @@ import Link from "next/link";
 import { getAdminStats, getAllOrders } from "@/lib/queries";
 import { StatsCard } from "@/components/admin/StatsCard";
 import { formatPrice, formatDate } from "@/lib/utils";
-import { BRAND_NAME, ORDER_STATUS_LABELS } from "@/lib/constants";
-import { ShoppingCart, Users, Package, IndianRupee, Plus, FolderOpen } from "lucide-react";
-import { Badge } from "@/components/ui/Badge";
+import { OrderStatusBadge } from "@/components/shared/OrderStatusBadge";
+import { BRAND_NAME } from "@/lib/constants";
+import { ShoppingCart, Users, Package, IndianRupee, Plus, Warehouse, CreditCard } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 
 export default async function AdminDashboard() {
@@ -16,7 +16,7 @@ export default async function AdminDashboard() {
       <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
       <p className="text-sm text-gray-500">Welcome to {BRAND_NAME} Admin</p>
 
-      <div className="mt-6 grid gap-4 sm:grid-cols-2">
+      <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <Link
           href="/admin/products/new"
           className="flex items-center gap-4 rounded-xl border-2 border-dashed border-gray-300 bg-white p-6 transition-colors hover:border-brand-800 hover:bg-brand-50"
@@ -30,15 +30,27 @@ export default async function AdminDashboard() {
           </div>
         </Link>
         <Link
-          href="/admin/categories"
+          href="/admin/inventory"
           className="flex items-center gap-4 rounded-xl border-2 border-dashed border-gray-300 bg-white p-6 transition-colors hover:border-brand-800 hover:bg-brand-50"
         >
           <div className="rounded-full bg-brand-100 p-3 text-brand-900">
-            <FolderOpen className="h-6 w-6" />
+            <Warehouse className="h-6 w-6" />
           </div>
           <div>
-            <p className="text-lg font-semibold text-gray-900">Manage Categories</p>
-            <p className="text-sm text-gray-500">Women, Men, Kids, Ethnic & more</p>
+            <p className="text-lg font-semibold text-gray-900">Inventory</p>
+            <p className="text-sm text-gray-500">Stock, returns & cancelled items</p>
+          </div>
+        </Link>
+        <Link
+          href="/admin/payments"
+          className="flex items-center gap-4 rounded-xl border-2 border-dashed border-gray-300 bg-white p-6 transition-colors hover:border-brand-800 hover:bg-brand-50"
+        >
+          <div className="rounded-full bg-brand-100 p-3 text-brand-900">
+            <CreditCard className="h-6 w-6" />
+          </div>
+          <div>
+            <p className="text-lg font-semibold text-gray-900">Payments</p>
+            <p className="text-sm text-gray-500">COD collection & payment history</p>
           </div>
         </Link>
       </div>
@@ -77,7 +89,7 @@ export default async function AdminDashboard() {
                       {(order.profiles as { full_name?: string })?.full_name || order.address?.full_name || "Guest"}
                     </td>
                     <td className="px-4 py-3">{formatPrice(order.total)}</td>
-                    <td className="px-4 py-3"><Badge>{ORDER_STATUS_LABELS[order.status] || order.status}</Badge></td>
+                    <td className="px-4 py-3"><OrderStatusBadge status={order.status} /></td>
                     <td className="px-4 py-3 text-gray-500">{formatDate(order.created_at)}</td>
                   </tr>
                 ))

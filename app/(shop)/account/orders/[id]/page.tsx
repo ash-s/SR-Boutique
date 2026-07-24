@@ -3,10 +3,9 @@ import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getOrderById } from "@/lib/queries";
 import { formatPrice, formatDate, maskPhone } from "@/lib/utils";
-import { Badge } from "@/components/ui/Badge";
+import { OrderStatusBadge } from "@/components/shared/OrderStatusBadge";
 import { ProductImage } from "@/components/shop/ProductImage";
 import { OrderTrackingTimeline } from "@/components/shop/OrderTrackingTimeline";
-import { ORDER_STATUS_LABELS } from "@/lib/constants";
 import { OrderItem, OrderStatus } from "@/lib/types";
 import { ArrowLeft, MapPin, CreditCard } from "lucide-react";
 
@@ -51,12 +50,7 @@ export default async function OrderDetailPage({ params }: OrderDetailPageProps) 
           <p className="text-sm text-white/70">Order Details</p>
           <h2 className="mt-1 text-2xl font-bold">#{id.slice(0, 8).toUpperCase()}</h2>
           <div className="mt-3 flex flex-wrap items-center gap-3">
-            <Badge
-              variant={order.status === "delivered" ? "success" : order.status === "pending" ? "warning" : "default"}
-              className="bg-white/20 text-white"
-            >
-              {ORDER_STATUS_LABELS[order.status] || order.status}
-            </Badge>
+            <OrderStatusBadge status={order.status} />
             <span className="text-sm text-white/80">{formatDate(order.created_at)}</span>
             <span className="text-lg font-bold">{formatPrice(order.total)}</span>
           </div>
