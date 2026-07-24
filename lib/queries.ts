@@ -242,7 +242,7 @@ export async function getAllReviews() {
   const supabase = await createClient();
   const { data } = await supabase
     .from("reviews")
-    .select("*, profiles(full_name), products(name)")
+    .select("*, profiles(full_name), products(id, name)")
     .order("created_at", { ascending: false });
   return data || [];
 }

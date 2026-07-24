@@ -9,7 +9,6 @@ import {
   getDiscountPercent,
   getProductImage,
   normalizeImageUrl,
-  formatDate,
 } from "@/lib/utils";
 import { useCart } from "@/components/CartProvider";
 import { useWishlist } from "@/components/WishlistProvider";
@@ -17,9 +16,9 @@ import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { ProductCard } from "@/components/shop/ProductCard";
 import { ProductImage } from "@/components/shop/ProductImage";
+import { ProductReviews } from "@/components/shop/ProductReviews";
 import { RecentlyViewed, trackRecentlyViewed } from "@/components/shop/RecentlyViewed";
-import { Star, Heart, ShoppingBag } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
+import { Heart, ShoppingBag } from "lucide-react";
 import { useState } from "react";
 
 interface ProductDetailClientProps {
@@ -37,17 +36,12 @@ export function ProductDetailClient({
 }: ProductDetailClientProps) {
   const { addItem } = useCart();
   const { isInWishlist, toggle, isLoaded: wishlistLoaded } = useWishlist();
-  const supabase = createClient();
   const images = product.product_images?.sort((a, b) => a.sort_order - b.sort_order) || [];
   const [selectedImage, setSelectedImage] = useState(0);
   const [size, setSize] = useState(product.sizes?.[0] || "Free Size");
   const [color, setColor] = useState(product.colors?.[0] || "Default");
   const [added, setAdded] = useState(false);
   const [wishlistAdded, setWishlistAdded] = useState(false);
-  const [reviews] = useState(initialReviews);
-  const [reviewForm, setReviewForm] = useState({ rating: 5, comment: "" });
-  const [reviewLoading, setReviewLoading] = useState(false);
-  const [reviewMessage, setReviewMessage] = useState("");
 
   useEffect(() => {
     trackRecentlyViewed(product);
@@ -81,28 +75,6 @@ export function ProductDetailClient({
     });
     setAdded(true);
     setTimeout(() => setAdded(false), 2000);
-  };
-
-  const handleSubmitReview = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!userId) return;
-    setReviewLoading(true);
-    setReviewMessage("");
-
-    const { error } = await supabase.from("reviews").insert({
-      product_id: product.id,
-      user_id: userId,
-      rating: reviewForm.rating,
-      comment: reviewForm.comment,
-    });
-
-    if (error) {
-      setReviewMessage(error.message);
-    } else {
-      setReviewMessage("Review submitted! It will appear after admin approval.");
-      setReviewForm({ rating: 5, comment: "" });
-    }
-    setReviewLoading(false);
   };
 
   return (
@@ -298,67 +270,11 @@ export function ProductDetailClient({
 
       <RecentlyViewed excludeId={product.id} />
 
-      <section className="mt-12">
-        <h2 className="text-xl font-bold text-gray-900">Customer Reviews</h2>
-        {reviews.length > 0 ? (
-          <div className="mt-4 space-y-4">
-            {reviews.map((review) => (
-              <div key={review.id} className="rounded-lg border p-4">
-                <div className="flex items-center gap-2">
-                  <div className="flex">
-                    {Array.from({ length: 5 }).map((_, i) => (
-                      <Star
-                        key={i}
-                        className={`h-4 w-4 ${i < review.rating ? "fill-yellow-400 text-yellow-400" : "text-gray-300"}`}
-                      />
-                    ))}
-                  </div>
-                  <span className="text-sm font-medium">
-                    {(review.profiles as { full_name?: string })?.full_name || "Customer"}
-                  </span>
-                  <span className="text-xs text-gray-500">{formatDate(review.created_at)}</span>
-                </div>
-                {review.comment && <p className="mt-2 text-sm text-gray-600">{review.comment}</p>}
-              </div>
-            ))}
-          </div>
-        ) : (
-          <p className="mt-4 text-gray-500">No reviews yet.</p>
-        )}
-
-        {userId ? (
-          <form onSubmit={handleSubmitReview} className="mt-6 max-w-md space-y-4 rounded-lg border p-4">
-            <h3 className="font-medium">Write a Review</h3>
-            <div>
-              <label className="text-sm">Rating</label>
-              <select
-                value={reviewForm.rating}
-                onChange={(e) => setReviewForm({ ...reviewForm, rating: parseInt(e.target.value) })}
-                className="mt-1 w-full rounded-md border px-3 py-2 text-sm"
-              >
-                {[5, 4, 3, 2, 1].map((r) => (
-                  <option key={r} value={r}>{r} Stars</option>
-                ))}
-              </select>
-            </div>
-            <textarea
-              placeholder="Your review..."
-              value={reviewForm.comment}
-              onChange={(e) => setReviewForm({ ...reviewForm, comment: e.target.value })}
-              rows={3}
-              className="w-full rounded-md border px-3 py-2 text-sm"
-            />
-            {reviewMessage && <p className="text-sm text-brand-800">{reviewMessage}</p>}
-            <Button type="submit" disabled={reviewLoading}>
-              {reviewLoading ? "Submitting..." : "Submit Review"}
-            </Button>
-          </form>
-        ) : (
-          <p className="mt-4 text-sm text-gray-500">
-            <Link href="/login" className="text-brand-800 hover:underline">Login</Link> to write a review.
-          </p>
-        )}
-      </section>
+      <ProductReviews
+        productId={product.id}
+        initialReviews={initialReviews}
+        userId={userId}
+      />
     </div>
   );
 }
